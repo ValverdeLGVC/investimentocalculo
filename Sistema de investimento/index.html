@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Investimentos</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #bbbbbb;
+            color: #333;
+        }
+
+        #container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            margin: auto;
+            font-size: 1.1rem;
+        }
+
+        h1 {
+            color: #007bff;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        #investimento {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .positivo {
+            color: green;
+        }
+
+        .negativo {
+            color: red;
+        }
+
+        .cinza {
+            color: #aaa;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            margin: 10px 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            padding: 10px;
+            margin: 10px 0;
+            width: calc(100% - 22px);
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.4);
+            outline: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+            font-size: 1rem;
+        }
+
+        th {
+            background-color: #f7f7f7;
+        }
+
+        td {
+            background-color: #fafafa;
+        }
+
+        #formCompra,
+        #historico,
+        #previsaoLucroDiv,
+        #estoque {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        #estoqueLista {
+            margin-top: 20px;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        #estoqueLista button {
+            font-size: 0.9rem;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #estoqueLista div {
+            padding: 12px;
+            background: #d4d4d4;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #9e9e9e;
+        }
+
+        .estoque-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .estoque-item span {
+            margin-right: 10px;
+        }
+
+        .estoque-item button {
+            background-color: #ffc107;
+            border-color: #ffc107;
+        }
+
+        .estoque-item button:hover {
+            background-color: #e0a800;
+            border-color: #e0a800;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1>Sistema de Investimentos e Gastos</h1>
+        <p>Saldo de Investimento: <span id="investimento">R$ 0,00</span></p>
+        <p id="previsaoLucroDiv">Previsão de Lucro: <span id="previsaoLucro" class="cinza">R$ 0,00</span></p>
+        <button onclick="aplicarInvestimento()">Aplicar Investimento</button>
+        <button onclick="registrarCompra()">Registrar Compra</button>
+        <button onclick="verHistorico()">Histórico</button>
+        <button onclick="gerenciarEstoque()">Estoque</button>
+        <button onclick="limparSistema()">Limpar Sistema</button>
+        <button onclick="inserirPrevisaoLucro()">Inserir Previsão de Lucro</button>
+        <button onclick="finalizarPrevisaoLucro()">Finalizar Previsão</button>
+
+        <div id="formCompra">
+            <h2>Registrar Compra</h2>
+            <input type="text" id="item" placeholder="Nome do item">
+            <input type="number" id="valor" placeholder="Valor" step="0.01">
+            <button onclick="adicionarCompra()">Adicionar</button>
+            <button onclick="finalizarCompra()">Finalizar Compra</button>
+        </div>
+
+        <div id="historico">
+            <h2>Histórico de Compras</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaHistorico"></tbody>
+            </table>
+        </div>
+
+        <div id="estoque">
+            <h2>Gerenciar Estoque</h2>
+            <input type="text" id="produtoEstoque" placeholder="Nome do Produto">
+            <input type="number" id="quantidadeEstoque" placeholder="Quantidade" min="1">
+            <button onclick="adicionarProdutoEstoque()">Adicionar ao Estoque</button>
+            <button onclick="verEstoque()">Ver Estoque</button>
+            <div id="estoqueLista"></div>
+        </div>
+    </div>
+
+    <script>
+        let saldoInvestimento = parseFloat(localStorage.getItem('saldoInvestimento')) || 0;
+        let compras = JSON.parse(localStorage.getItem('compras')) || [];
+        let previsaoLucro = parseFloat(localStorage.getItem('previsaoLucro')) || 0;
+        let estoque = JSON.parse(localStorage.getItem('estoque')) || [];
+        atualizarSaldo();
+        atualizarPrevisaoLucro();
+
+        function atualizarSaldo() {
+            const elemento = document.getElementById("investimento");
+            elemento.textContent = `R$ ${saldoInvestimento.toFixed(2)}`;
+            if (saldoInvestimento > 0) {
+                elemento.className = "positivo";
+            } else if (saldoInvestimento < 0) {
+                elemento.className = "negativo";
+            } else {
+                elemento.className = "";
+            }
+            localStorage.setItem('saldoInvestimento', saldoInvestimento);
+        }
+
+        function atualizarPrevisaoLucro() {
+            document.getElementById("previsaoLucro").textContent = `R$ ${previsaoLucro.toFixed(2)}`;
+            document.getElementById("previsaoLucroDiv").style.display = previsaoLucro > 0 ? "block" : "none";
+            localStorage.setItem('previsaoLucro', previsaoLucro);
+        }
+
+        function aplicarInvestimento() {
+            let valor = parseFloat(prompt("Digite o valor a investir:"));
+            if (!isNaN(valor) && valor > 0) {
+                saldoInvestimento += valor;
+                atualizarSaldo();
+            } else {
+                alert("Valor inválido!");
+            }
+        }
+
+        function registrarCompra() {
+            document.getElementById("formCompra").style.display = "block";
+        }
+
+        function adicionarCompra() {
+            const item = document.getElementById("item").value;
+            const valor = parseFloat(document.getElementById("valor").value);
+            if (item && !isNaN(valor) && valor > 0) {
+                compras.push({ item, valor });
+                saldoInvestimento -= valor;  // Atualiza o saldo de investimento
+                atualizarSaldo();
+                localStorage.setItem('compras', JSON.stringify(compras));
+                alert("Compra registrada!");
+                document.getElementById("item").value = '';
+                document.getElementById("valor").value = '';
+            } else {
+                alert("Por favor, preencha corretamente os campos!");
+            }
+        }
+
+        function finalizarCompra() {
+            document.getElementById("formCompra").style.display = "none";
+            verHistorico();
+        }
+
+        function verHistorico() {
+            document.getElementById("historico").style.display = "block";
+            const tabela = document.getElementById("tabelaHistorico");
+            tabela.innerHTML = "";
+            compras.forEach(compra => {
+                const row = document.createElement("tr");
+                const cellItem = document.createElement("td");
+                const cellValor = document.createElement("td");
+                cellItem.textContent = compra.item;
+                cellValor.textContent = `R$ ${compra.valor.toFixed(2)}`;
+                row.appendChild(cellItem);
+                row.appendChild(cellValor);
+                tabela.appendChild(row);
+            });
+        }
+
+        function limparSistema() {
+            if (confirm("Tem certeza que deseja limpar todos os dados?")) {
+                localStorage.clear();
+                saldoInvestimento = 0;
+                compras = [];
+                previsaoLucro = 0;
+                estoque = [];
+                atualizarSaldo();
+                atualizarPrevisaoLucro();
+                document.getElementById("tabelaHistorico").innerHTML = "";
+                alert("Todos os dados foram apagados.");
+            }
+        }
+
+        function inserirPrevisaoLucro() {
+            let lucro = parseFloat(prompt("Digite a previsão de lucro:"));
+            if (!isNaN(lucro) && lucro > 0) {
+                previsaoLucro = lucro;
+                atualizarPrevisaoLucro();
+            } else {
+                alert("Valor inválido!");
+            }
+        }
+
+        function finalizarPrevisaoLucro() {
+            if (previsaoLucro > 0) {
+                let lucroRealizado = parseFloat(prompt("Digite o valor do lucro realizado:"));
+                if (!isNaN(lucroRealizado) && lucroRealizado >= 0) {
+                    saldoInvestimento += lucroRealizado;
+                    atualizarSaldo();
+                    previsaoLucro = 0;  // Reseta a previsão de lucro após finalizar
+                    atualizarPrevisaoLucro();
+                    alert(`Lucro de R$ ${lucroRealizado.toFixed(2)} adicionado ao investimento!`);
+                } else {
+                    alert("Valor inválido para o lucro!");
+                }
+            } else {
+                alert("Não há previsão de lucro para finalizar.");
+            }
+        }
+
+        function gerenciarEstoque() {
+            document.getElementById("estoque").style.display = "block";
+        }
+
+        function adicionarProdutoEstoque() {
+            const produto = document.getElementById("produtoEstoque").value;
+            const quantidade = parseInt(document.getElementById("quantidadeEstoque").value);
+            if (produto && !isNaN(quantidade) && quantidade > 0) {
+                estoque.push({ produto, quantidade });
+                localStorage.setItem('estoque', JSON.stringify(estoque));
+                alert("Produto adicionado ao estoque!");
+                document.getElementById("produtoEstoque").value = '';
+                document.getElementById("quantidadeEstoque").value = '';
+                verEstoque(); // Atualiza a lista de estoque após adicionar
+            } else {
+                alert("Por favor, preencha corretamente os campos!");
+            }
+        }
+
+        function verEstoque() {
+            let estoqueLista = document.getElementById("estoqueLista");
+            estoqueLista.innerHTML = "<h3>Estoque Atual</h3>";
+            estoque.forEach((item, index) => {
+                let itemDiv = document.createElement("div");
+                itemDiv.textContent = `${item.produto} - Quantidade: ${item.quantidade}`;
+                let editarButton = document.createElement("button");
+                editarButton.textContent = "Editar";
+                editarButton.onclick = () => editarProduto(index);
+
+                let excluirButton = document.createElement("button");
+                excluirButton.textContent = "Excluir";
+                excluirButton.onclick = () => excluirProduto(index);
+
+                itemDiv.appendChild(editarButton);
+                itemDiv.appendChild(excluirButton);
+                estoqueLista.appendChild(itemDiv);
+            });
+        }
+
+        function editarProduto(index) {
+            const novoProduto = prompt("Digite o novo nome do produto:", estoque[index].produto);
+            const novaQuantidade = parseInt(prompt("Digite a nova quantidade:", estoque[index].quantidade));
+            if (novoProduto && !isNaN(novaQuantidade) && novaQuantidade > 0) {
+                estoque[index].produto = novoProduto;
+                estoque[index].quantidade = novaQuantidade;
+                localStorage.setItem('estoque', JSON.stringify(estoque));
+                verEstoque(); // Atualiza a lista de estoque após edição
+            } else {
+                alert("Valores inválidos!");
+            }
+        }
+
+        function excluirProduto(index) {
+            if (confirm("Tem certeza que deseja excluir este item do estoque?")) {
+                estoque.splice(index, 1); // Remove o item do estoque
+                localStorage.setItem('estoque', JSON.stringify(estoque));
+                verEstoque(); // Atualiza a lista de estoque após exclusão
+            }
+        }
+    </script>
+</body>
+
+</html>
